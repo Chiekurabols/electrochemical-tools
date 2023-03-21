@@ -23,7 +23,7 @@ class ec_reaction:
     ):
         
         # placeholder reminder that multiple checks are necessary
-        if len({len(edft), len(zpe), len(labels)-2, len(elchem_steps)-1}) != 1:
+        if len({len(edft), len(zpe), len(labels)-1, len(elchem_steps)}) != 1:
             raise ValueError("Mismatch in number of supplied elements")
         
         self.edft = edft
@@ -43,13 +43,10 @@ class ec_reaction:
         else:
             self.dg = dg
             
-        if dirlabels is None:
-            self.dirlabels = [re.sub(r'[^A-Za-z0-9]+', '', s) for s in labels[1:-1]]
-        else:
-            self.dirlabels = dirlabels
         
     @classmethod
     def auto_read(cls, wd, dirlabels):
+        # automatic read, not fool-proof, assumes /<wd>/<dirlabel>/zpe directory
         edft = []
         zpe = []
         for label in dirlabels:
@@ -84,9 +81,6 @@ class ec_reaction:
     
     def _calc_dg_zero(self, edft, zpe, tds, reactants, symfac):
         dg = []
-        edft.insert(0, 0)
-        zpe.insert(0, 0)
-        tds.insert(0, 0)
         for i in range(1, len(edft)):
             de = edft[i] - edft[i-1] + symfac * self._sum_reactants(reactants, i-1, 0)
             dzpe = zpe[i] - zpe[i-1] + symfac * self._sum_reactants(reactants, i-1, 1)
@@ -344,7 +338,6 @@ def construct_ec_own(ec_reaction_class, reactants_energies, **kwargs):
 
 oer_standard = construct_ec_mechanism(
     reactants={
-        "*": {"reac_part": [-1, 0, 0]},
         "H2O": {"reac_part": [-1, 0, -1]},
         "H2": {"reac_part": [0.5, 0.5, 0.5]}
     },
