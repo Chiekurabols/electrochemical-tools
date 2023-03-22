@@ -94,7 +94,7 @@ class ec_reaction:
     def calc_gmax(self, op):
         dg = np.array(self.dg)
 
-        dg = dg + self.electrode * (self.eq_pot + op)
+        dg = dg + self.electrode * (self.eq_pot + op) * np.array(self.elchem_steps)
         
         gmax = []
         for i in range(len(dg)):
@@ -130,7 +130,7 @@ class ec_reaction:
         top_side.set_visible(False)
 
         ax.set_xticks([])
-        ax.set_xlim(0, sum(self.elchem_steps)+1.5)
+        ax.set_xlim(0, len(self.labels)+1.5)
         ax.set_ylabel('Free Energy, eV')
         ax.set_xlabel('Reaction Coordinate')
 
@@ -200,7 +200,7 @@ class ec_reaction:
         top_side.set_visible(False)
 
         ax.set_xticks([])
-        ax.set_xlim(0, sum(self.elchem_steps)+1.5)
+        ax.set_xlim(0, len(self.labels)+1.5)
         ax.set_ylabel('Free Energy, eV')
         ax.set_xlabel('Reaction Coordinate')
         ax.text(
@@ -216,7 +216,7 @@ class ec_reaction:
                 
     def _g_transform_plot(self, dg, u):
         dg = np.array(dg)
-        dg = dg - u
+        dg = dg - u * np.array(self.elchem_steps)
         dg_plot = np.cumsum(dg)
         dg_plot = np.concatenate(([0], dg_plot, [dg_plot[-1]]))
         return dg_plot
@@ -337,12 +337,66 @@ def construct_ec_own(ec_reaction_class, reactants_energies, **kwargs):
     return ec_own
 
 oer_standard = construct_ec_mechanism(
+    # reactants might need to be coded as class attribute instead of instance attribute
     reactants={
         "H2O": {"reac_part": [-1, 0, -1]},
         "H2": {"reac_part": [0.5, 0.5, 0.5]}
     },
     labels=["*", "*OH", "*O", "*OOH", r"* + O$_2$"],
     elchem_steps=[True, True, True, True],
+    electrode=-1,
+    eq_pot=1.23
+)
+
+oer_bifunc1 = construct_ec_mechanism(
+    # reactants might need to be coded as class attribute instead of instance attribute
+    reactants={
+        "H2O": {"reac_part": [-1, 0, -1]},
+        "H2": {"reac_part": [0.5, 0.5, 0.5]}
+    },
+    labels=[
+        r"M + *O$_A$",
+        r"M-OH + *O$_A$",
+        r"M-O + *O$_A$",
+        r"M-OO + *OH$_A$",
+        r"M + *O$_A$ + O$_2$"],
+    elchem_steps=[True, True, True, True],
+    electrode=-1,
+    eq_pot=1.23
+)
+
+oer_bifunc2 = construct_ec_mechanism(
+    # reactants might need to be coded as class attribute instead of instance attribute
+    reactants={
+        "H2O": {"reac_part": [-1, 0, -1, 0]},
+        "H2": {"reac_part": [0.5, 0.5, 0, 0.5]}
+    },
+    labels=[
+        r"M + *O$_A$",
+        r"M-OH + *O$_A$",
+        r"M-O + *O$_A$",
+        r"M-OOH + *OH$_A$",
+        r"M-OOH + *O$_A$",
+        r"M + *O$_A$ + O$_2$"],
+    elchem_steps=[True, True, False, True, True],
+    electrode=-1,
+    eq_pot=1.23
+)
+
+oer_binuc = construct_ec_mechanism(
+    # reactants might need to be coded as class attribute instead of instance attribute
+    reactants={
+        "H2O": {"reac_part": [-1, -1, 0, 0]},
+        "H2": {"reac_part": [0.5, 0.5, 0.5, 0.5]}
+    },
+    labels=[
+        r"M + M",
+        r"M-OH + M",
+        r"M-OH + M-OH",
+        r"M-O + M-OH",
+        r"M-O + M-O",
+        r"M + M + O$_2$"],
+    elchem_steps=[True, True, True, True, False],
     electrode=-1,
     eq_pot=1.23
 )
