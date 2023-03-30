@@ -276,29 +276,30 @@ class ec_reaction:
         
         gmax, pos = self.calc_gmax(op)
 
-        ax.annotate(
-            '',
-            xy=(pos[1] + 0.25, dg_plot[pos[1]]),
-            xytext=(pos[1] + 0.25, dg_plot[pos[0]]),
-            arrowprops={'arrowstyle':'<->', 'shrinkA': 0, 'shrinkB': 0}
-        )
-        
-        xytext_coord = (3, -1*op) if custom_coord is None else custom_coord
-        
-        ax.annotate(
-            rf'$G_{{max}}$({op:.2f} V) =  {gmax:.2f} eV',
-            xy = ( pos[1] + 0.25, (dg_plot[pos[1]] + dg_plot[pos[0]])/2 ),
-            xytext = xytext_coord, ### this needs to be optimized
-            arrowprops={
-                'arrowstyle': '->',
-                'shrinkA': 3,
-                'shrinkB': 3,
-                'connectionstyle':"arc3,rad=0.4",
-                'ls': '--',
-                'color': 'grey',
-                'alpha': 0.5
-            }
-        )
+        if gmax >= 0:
+            xytext_coord = (3, -1*op) if custom_coord is None else custom_coord
+
+            ax.annotate(
+                '',
+                xy=(pos[1] + 0.25, dg_plot[pos[1]]),
+                xytext=(pos[1] + 0.25, dg_plot[pos[0]]),
+                arrowprops={'arrowstyle':'<->', 'shrinkA': 0, 'shrinkB': 0}
+            )
+            
+            ax.annotate(
+                rf'$G_\mathrm{{max}}$({op:.2f} V) =  {gmax:.2f} eV',
+                xy = ( pos[1] + 0.25, (dg_plot[pos[1]] + dg_plot[pos[0]])/2 ),
+                xytext = xytext_coord, ### this needs to be optimized
+                arrowprops={
+                    'arrowstyle': '->',
+                    'shrinkA': 3,
+                    'shrinkB': 3,
+                    'connectionstyle':"arc3,rad=0.4",
+                    'ls': '--',
+                    'color': 'grey',
+                    'alpha': 0.5
+                }
+            )
 
 
 def construct_ec_mechanism(reactants, labels, elchem_steps, electrode, eq_pot, **kwargs):
@@ -336,13 +337,13 @@ def construct_ec_own(ec_reaction_class, reactants_energies, **kwargs):
             
     return ec_own
 
-oer_standard = construct_ec_mechanism(
+oer_mononuc = construct_ec_mechanism(
     # reactants might need to be coded as class attribute instead of instance attribute
     reactants={
         "H2O": {"reac_part": [-1, 0, -1]},
         "H2": {"reac_part": [0.5, 0.5, 0.5]}
     },
-    labels=["*", "*OH", "*O", "*OOH", r"* + O$_2$"],
+    labels=["M", "M-OH", "M-O", "M-OOH", r"M + O$_2(g)$"],
     elchem_steps=[True, True, True, True],
     electrode=-1,
     eq_pot=1.23
@@ -359,7 +360,7 @@ oer_bifunc1 = construct_ec_mechanism(
         r"M-OH + *O$_A$",
         r"M-O + *O$_A$",
         r"M-OO + *OH$_A$",
-        r"M + *O$_A$ + O$_2$"],
+        r"M + *O$_A$ + O$_2(g)$"],
     elchem_steps=[True, True, True, True],
     electrode=-1,
     eq_pot=1.23
@@ -377,7 +378,7 @@ oer_bifunc2 = construct_ec_mechanism(
         r"M-O + *O$_A$",
         r"M-OOH + *OH$_A$",
         r"M-OOH + *O$_A$",
-        r"M + *O$_A$ + O$_2$"],
+        r"M + *O$_A$ + O$_2(g)$"],
     elchem_steps=[True, True, False, True, True],
     electrode=-1,
     eq_pot=1.23
@@ -395,7 +396,7 @@ oer_binuc = construct_ec_mechanism(
         r"M-OH + M-OH",
         r"M-O + M-OH",
         r"M-O + M-O",
-        r"M + M + O$_2$"],
+        r"M + M + O$_2(g)$"],
     elchem_steps=[True, True, True, True, False],
     electrode=-1,
     eq_pot=1.23
