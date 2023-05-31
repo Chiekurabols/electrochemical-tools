@@ -1,5 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from math import exp, log
 import re
 import os
 from helpers import *
@@ -45,10 +46,13 @@ class ec_reaction:
             
         
     @classmethod
-    def auto_read(cls, wd, dirlabels):
+    def auto_read(cls, wd, dirlabels, calc_tds=True):
         # automatic read, not fool-proof, assumes /<wd>/<dirlabel>/zpe directory
         edft = []
         zpe = []
+        tds = []
+
+        kbt = 25.7
         for label in dirlabels:
             for line in read_reverse_order(os.path.join(wd, label, "OUTCAR")):
                 if re.search("sigma", line):
@@ -58,13 +62,20 @@ class ec_reaction:
             
             with open(os.path.join(wd, label, "zpe", "OUTCAR")) as outcar:
                 zpe_energy = 0.
+                ts_energy = 0.
                 for line in outcar:
                     if re.search("f\s*=", line):
                         zpe_energy += float(line.split()[-2])
-                zpe_energy = zpe_energy / 2000
+                        #b N_a = 1 since we are calculating TS in meV, not kCal/mol
+                        ts_energy += kbt * ( (zpe_energy/kbt) / (exp(zpe_energy/kbt)-1) - log(1-exp(-zpe_energy/kbt)) )
+                zpe_energy = zpe_energy / 2000 # meV to eV, harmonic approx
+                ts_energy = ts_energy / 1000 
                 # print(f"{zpe_energy:.5f}")
                 zpe.append(zpe_energy)
-        return cls(edft = edft, zpe = zpe)
+                tds.append(ts_energy)
+                if not calc_tds:
+                    tds=None
+        return cls(edft = edft, zpe = zpe, tds = tds)
 
     
     @classmethod
@@ -161,7 +172,7 @@ class ec_reaction:
         u,
         print_labels=False,
         ax=None,
-        color='pink',
+        # color='pink',
         line_width=0.85,
         **kwargs
     ):
@@ -172,14 +183,18 @@ class ec_reaction:
         ax = plt.gca() if ax is None else ax
         dg_plot = dg_plot[:-1]
         for i in range(len(dg_plot)):
-            ax.plot([i+line_shift, i+line_width], [dg_plot[i], dg_plot[i]], color=color, **kwargs)
+            ax.plot(
+                [i+line_shift, i+line_width],
+                [dg_plot[i], dg_plot[i]],
+                # color=color,
+                **kwargs)
             
             if i > 0:
                 ax.plot(
                     [i-line_shift, i+line_shift],
                     [dg_plot[i-1], dg_plot[i]],
                     linestyle='dotted',
-                    color=color,
+                    # color=color,
                     **kwargs
                 )
                 
