@@ -44,37 +44,44 @@ class ec_reaction:
         else:
             self.dg = dg
             
-        
+    
+    @staticmethod
+    def read_edft(outcar_path):
+        for line in read_reverse_order(outcar_path):
+            if re.search("sigma", line):
+                edft_out = float(line.split()[-1])
+                break
+        return edft_out
+
+    @staticmethod
+    def read_zpe_tds(outcar_path, calc_tds=True):
+        kbt = 25.7 #meV
+        with open(outcar_path) as outcar:
+            zpe_energy = 0.
+            ts_energy = 0.
+            for line in outcar:
+                if re.search("f\s*=", line):
+                    zpe_energy += float(line.split()[-2])
+                    #b N_a = 1 since we are calculating TS in meV, not kCal/mol
+                    ts_energy += kbt * ( (zpe_energy/kbt) / (exp(zpe_energy/kbt)-1) - log(1-exp(-zpe_energy/kbt)) )
+            zpe_energy = zpe_energy / 2000 # meV to eV, harmonic approx
+            ts_energy = ts_energy / 1000 
+            if not calc_tds:
+                return zpe_energy
+            return (zpe_energy, ts_energy)
+            
+
     @classmethod
     def auto_read(cls, wd, dirlabels, calc_tds=True):
         # automatic read, not fool-proof, assumes /<wd>/<dirlabel>/zpe directory
         edft = []
         zpe = []
         tds = []
-
-        kbt = 25.7
         for label in dirlabels:
-            for line in read_reverse_order(os.path.join(wd, label, "OUTCAR")):
-                if re.search("sigma", line):
-                    # print(f'{float(line.split()[-1]):.3f}')
-                    edft.append(float(line.split()[-1]))
-                    break
-            
-            with open(os.path.join(wd, label, "zpe", "OUTCAR")) as outcar:
-                zpe_energy = 0.
-                ts_energy = 0.
-                for line in outcar:
-                    if re.search("f\s*=", line):
-                        zpe_energy += float(line.split()[-2])
-                        #b N_a = 1 since we are calculating TS in meV, not kCal/mol
-                        ts_energy += kbt * ( (zpe_energy/kbt) / (exp(zpe_energy/kbt)-1) - log(1-exp(-zpe_energy/kbt)) )
-                zpe_energy = zpe_energy / 2000 # meV to eV, harmonic approx
-                ts_energy = ts_energy / 1000 
-                # print(f"{zpe_energy:.5f}")
-                zpe.append(zpe_energy)
-                tds.append(ts_energy)
-                if not calc_tds:
-                    tds=None
+            edft.append(cls.read_edft(os.path.join(wd, label, "OUTCAR")))
+            zpe_energy, ts_energy = cls.read_zpe_tds(os.path.join(wd, label, "zpe", "OUTCAR"), calc_tds)
+            zpe.append(zpe_energy)
+            tds.append(ts_energy)
         return cls(edft = edft, zpe = zpe, tds = tds)
 
     
