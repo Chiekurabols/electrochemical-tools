@@ -67,7 +67,7 @@ class ec_reaction:
             zpe_energy = zpe_energy / 2000 # meV to eV, harmonic approx
             ts_energy = ts_energy / 1000 
             if not calc_tds:
-                return zpe_energy
+                return zpe_e
             return (zpe_energy, ts_energy)
             
 
@@ -420,6 +420,18 @@ oer_binuc = construct_ec_mechanism(
         r"M-O + M-O",
         r"M + M + O$_2(g)$"],
     elchem_steps=[True, True, True, True, False],
+    electrode=-1,
+    eq_pot=1.23
+)
+
+oer_mononuc_walden = construct_ec_mechanism(
+    # reactants might need to be coded as class attribute instead of instance attribute
+    reactants={
+        "H2O": {"reac_part": [0, -1, 0]},
+        "H2": {"reac_part": [0.5, 0.5, 0.5]}
+    },
+    labels=["M-OH", "M-O", "M-OOH", "M-OO", r"M-OH + O$_2(g)$"],
+    elchem_steps=[True, True, True, True],
     electrode=-1,
     eq_pot=1.23
 )
