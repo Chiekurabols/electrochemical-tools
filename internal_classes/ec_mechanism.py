@@ -5,7 +5,7 @@ import re
 import os
 from helpers import *
 
-
+#remember limitation - assumes that the final dG from the equilibrium potential
 class ec_reaction:
     def __init__(
         self,
@@ -431,6 +431,22 @@ oer_mononuc_walden = construct_ec_mechanism(
         "H2": {"reac_part": [0.5, 0.5, 0.5]}
     },
     labels=["M-OH", "M-O", "M-OOH", "M-OO", r"M-OH + O$_2(g)$"],
+    elchem_steps=[True, True, True, True],
+    electrode=-1,
+    eq_pot=1.23
+)
+
+oer_bifunc1_walden = construct_ec_mechanism(
+    reactants={
+        "H2O": {"reac_part": [0, -1, 0]},
+        "H2": {"reac_part": [0.5, 0.5, 0.5]}
+    },
+    labels=[
+        r"M-OH + *O$_A$",
+        r"M-O + *O$_A$",
+        r"M-OO + *OH$_A$",
+        r"M-OO + *O$_A$",
+        r"M-OH + *O$_A$ + O$_2(g)$"],
     elchem_steps=[True, True, True, True],
     electrode=-1,
     eq_pot=1.23
