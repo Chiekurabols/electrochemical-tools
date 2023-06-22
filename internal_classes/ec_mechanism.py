@@ -424,6 +424,24 @@ oer_binuc = construct_ec_mechanism(
     eq_pot=1.23
 )
 
+oer_oxide = construct_ec_mechanism(
+    # reactants might need to be coded as class attribute instead of instance attribute
+    reactants={
+        "H2O": {"reac_part": [-1, -1, 0, 0]},
+        "H2": {"reac_part": [0.5, 0.5, 0.5, 0.5]}
+    },
+    labels=[
+        r"M-O + M-O",
+        r"M-OOH + M-O",
+        r"M-OOH + M-OOH",
+        r"M-OOH + M-OO",
+        r"M-OO + M-OO",
+        r"M + M + O$_2(g)$"],
+    elchem_steps=[True, True, True, True, False],
+    electrode=-1,
+    eq_pot=1.23
+)
+
 oer_mononuc_walden = construct_ec_mechanism(
     # reactants might need to be coded as class attribute instead of instance attribute
     reactants={
