@@ -324,7 +324,7 @@ class ec_reaction:
             )
 
 
-def construct_ec_mechanism(reactants, labels, elchem_steps, electrode, eq_pot, **kwargs):
+def construct_ec_mechanism(reactants, labels, elchem_steps, electrode, eq_pot, refel="RHE", **kwargs):
     
     class custom_ec_mechanism(ec_reaction):
         def __init__(
@@ -337,6 +337,7 @@ def construct_ec_mechanism(reactants, labels, elchem_steps, electrode, eq_pot, *
             elchem_steps=elchem_steps,
             electrode=electrode,
             eq_pot=eq_pot,
+            refel=refel,
             **kwargs
         ):
             
@@ -344,7 +345,7 @@ def construct_ec_mechanism(reactants, labels, elchem_steps, electrode, eq_pot, *
             for key in self.reactants.keys():
                 self.reactants[key]["energies"] = reactants_energies[key]
             
-            super().__init__(edft, zpe, reactants, labels, elchem_steps, electrode, eq_pot, **kwargs)
+            super().__init__(edft, zpe, reactants, labels, elchem_steps, electrode, eq_pot, refel=refel, **kwargs)
             self._check_reactants()
         
         def _check_reactants(self):
@@ -469,3 +470,4 @@ oer_bifunc1_walden = construct_ec_mechanism(
     electrode=-1,
     eq_pot=1.23
 )
+
