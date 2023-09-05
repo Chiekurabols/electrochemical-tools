@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from math import exp, log
 import re
 import os
+from warnings import warn
 from helpers import *
 
 #remember limitation - assumes that the final dG from the equilibrium potential
@@ -40,11 +41,16 @@ class ec_reaction:
         self.refel = refel
         
         if dg is None:
-            self.dg = self._calc_dg_zero(self.edft, self.zpe, self.tds, self.reactants, self.symfac)
+            # self.dg = self._calc_dg_zero(self.edft, self.zpe, self.tds, self.reactants, self.symfac)
+            self.dg = self._calc_dg_zero()
         else:
             self.dg = dg
-            
-    
+
+    def set_labels(self, labels):
+        if len(labels)-1 != len(self.elchem_steps):
+                raise ValueError("Mismatch of number of labels and reaction steps")
+        self.labels = labels
+                
     @staticmethod
     def read_edft(outcar_path):
         for line in read_reverse_order(outcar_path):
@@ -67,19 +73,23 @@ class ec_reaction:
             zpe_energy = zpe_energy / 2000 # meV to eV, harmonic approx
             ts_energy = ts_energy / 1000 
             if not calc_tds:
-                return zpe_e
+                ts_energy = 0
             return (zpe_energy, ts_energy)
             
 
     @classmethod
-    def auto_read(cls, wd, dirlabels, calc_tds=True):
+    def auto_read(cls, wd, dirlabels, calc_tds=False):
         # automatic read, not fool-proof, assumes /<wd>/<dirlabel>/zpe directory
         edft = []
         zpe = []
         tds = []
         for label in dirlabels:
             edft.append(cls.read_edft(os.path.join(wd, label, "OUTCAR")))
-            zpe_energy, ts_energy = cls.read_zpe_tds(os.path.join(wd, label, "zpe", "OUTCAR"), calc_tds)
+            if os.path.isfile(os.path.join(wd, label, "zpe", "OUTCAR")):
+                zpe_energy, ts_energy = cls.read_zpe_tds(os.path.join(wd, label, "zpe", "OUTCAR"), calc_tds)
+            else:
+                zpe_energy, ts_energy = 0, 0
+                warn("Outcar for ZPE and TdS not found, setting both to 0")
             zpe.append(zpe_energy)
             tds.append(ts_energy)
         return cls(edft = edft, zpe = zpe, tds = tds)
@@ -97,7 +107,24 @@ class ec_reaction:
         return out
             
     
-    def _calc_dg_zero(self, edft, zpe, tds, reactants, symfac):
+    # def _calc_dg_zero(self, edft, zpe, tds, reactants, symfac):
+    #     dg = []
+    #     for i in range(1, len(edft)):
+    #         de = edft[i] - edft[i-1] + symfac * self._sum_reactants(reactants, i-1, 0)
+    #         dzpe = zpe[i] - zpe[i-1] + symfac * self._sum_reactants(reactants, i-1, 1)
+    #         dtds = tds[i] - tds[i-1] + symfac * self._sum_reactants(reactants, i-1, 2)
+    #         dg.append((de + dzpe - dtds) / symfac)
+                                
+    #     dg.append(self.eq_pot*sum(self.elchem_steps) - sum(dg))
+        
+    #     return dg
+
+    def recalc_dg(self):
+        # use this function to recalculate free energies after changin edft / zpe / tds
+        self.dg = self._calc_dg_zero()
+
+    def _calc_dg_zero(self):
+        edft, zpe, tds, reactants, symfac = self.edft, self.zpe, self.tds, self.reactants, self.symfac
         dg = []
         for i in range(1, len(edft)):
             de = edft[i] - edft[i-1] + symfac * self._sum_reactants(reactants, i-1, 0)
